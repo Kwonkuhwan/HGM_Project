@@ -50,6 +50,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         PV = photonView;
         ShowPanel(DisconnectPanel);
         ShowBackground(WaitingBackground);
+
+        PhotonNetwork.ConnectUsingSettings();
     }
 
     // 방생성
@@ -95,7 +97,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         if (string.IsNullOrWhiteSpace(NickInput.text)) return;
         PhotonNetwork.LocalPlayer.NickName = NickInput.text;
-        PhotonNetwork.ConnectUsingSettings();
     }
 
     public override void OnConnectedToMaster()

@@ -20,7 +20,7 @@ public class DeadBodyScript : MonoBehaviourPun
         CurBody.GetChild(1).GetComponent<SpriteRenderer>().color = UM.colors[_colorIndex];
         gameObject.tag = "DeadBody";
         colorIndex = _colorIndex;
-        //NM.WinCheck();
+        NM.WinCheck();
     }
 
 }

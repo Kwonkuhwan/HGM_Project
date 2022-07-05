@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine; // 시네머신 관련 코드
 using Photon.Pun;
-
 public class CameraSetup : MonoBehaviourPun
 {
+    public static CameraSetup instance;
+    public CinemachineVirtualCamera followCam;
     // 시네머신 카메라가 로컬 플레이어를 추적하도록 설정
     void Start()
     {
@@ -13,7 +14,7 @@ public class CameraSetup : MonoBehaviourPun
         if (this.photonView.IsMine)
         {
             // 씬에 있는 시네머신 가상 카메라를 찾고
-            var followCam = FindObjectOfType<CinemachineVirtualCamera>();
+            followCam = FindObjectOfType<CinemachineVirtualCamera>();
             // 가상 카메라의 추적 대상을 자신의 트랜스폼으로 변경
             followCam.Follow = transform;
             followCam.LookAt = transform;

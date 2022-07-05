@@ -5,41 +5,31 @@ using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
 using static UIManager;
-
 using UnityEngine.Experimental.Rendering.Universal;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
-    public static NetworkManager NM = null;
+    public static NetworkManager NM;
+    void Awake() => NM = this;
 
-    private void Awake()
-    {
-        if (NM == null)
-        {
-            NM = this;
-            DontDestroyOnLoad(this);
-        }
-        else
-        {
-            Destroy(this);
-        }
-    }
 
     public GameObject DisconnectPanel, WaitingPanel, InfoPanel, GamePanel,
            CrewWinPanel, ImposterWinPanel, JoinRoomPanel, CreateRoomPanel;
+
     public List<PlayerScript> Players = new List<PlayerScript>();
     public PlayerScript MyPlayer;
 
     public GameObject CrewInfoText, ImposterInfoText, WaitingBackground, Background;
+    public GameObject onChatButton;
+
     public bool isGameStart;
     public Transform SpawnPoint;
     public Light2D PointLight2D;
     public GameObject[] Interactions;
-    public GameObject[] Doors;
     public GameObject[] Lights;
     PhotonView PV;
     public bool isTest;
-    public enum ImpoType { OnlyMaster, Rand1, Rand2 }
+    public enum ImpoType {Rand1}
     public ImpoType impoType;
 
     void Start()
@@ -85,8 +75,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     }
 
     // 방랜덤 참가
-    public void OnJoinRandomRoom(InputField NickInput) 
-    { 
+    public void OnJoinRandomRoom(InputField NickInput)
+    {
         if (string.IsNullOrWhiteSpace(NickInput.text)) return;
         PhotonNetwork.LocalPlayer.NickName = NickInput.text;
         PhotonNetwork.JoinRandomRoom();
@@ -101,17 +91,18 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
-        PhotonNetwork.JoinLobby();
+        //PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
     {
-        PhotonNetwork.JoinOrCreateRoom("Room", new RoomOptions { MaxPlayers = 10 }, null);
+        //PhotonNetwork.JoinOrCreateRoom("Room", new RoomOptions { MaxPlayers = 5 }, null);
     }
 
     public override void OnJoinedRoom()
     {
         ShowPanel(WaitingPanel);
+        onChatButton.SetActive(true); //채팅활성화
         MyPlayer = PhotonNetwork.Instantiate("Player", Vector3.zero, Quaternion.identity)
             .GetComponent<PlayerScript>();
 
@@ -137,6 +128,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         WaitingBackground.SetActive(false);
         Background.SetActive(false);
 
+        onChatButton.SetActive(false); //채팅 비활성화
         CurBackground.SetActive(true);
     }
 
@@ -170,25 +162,17 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         SetImpoCrew();
         PhotonNetwork.CurrentRoom.IsOpen = false;
         PhotonNetwork.CurrentRoom.IsVisible = false;
-        ChatManager.CM.photonView.RPC("ChatClearRPC", RpcTarget.AllViaServer, false);
 
         PV.RPC("GameStartRPC", RpcTarget.AllViaServer);
     }
 
-
-    //로봇사냥꾼 랜덤 설정
     void SetImpoCrew()
     {
         List<PlayerScript> GachaList = new List<PlayerScript>(Players);
 
-        if (impoType == ImpoType.OnlyMaster)
+        if (impoType == ImpoType.Rand1)
         {
-            Players[0].GetComponent<PhotonView>().RPC("SetImpoCrew", RpcTarget.AllViaServer, true);// 테스트 : 방장만 임포스터
-        }
-
-        else if (impoType == ImpoType.Rand1)
-        {
-            for (int i = 0; i < 1; i++) // 
+            for (int i = 0; i < 1; i++) // 임포스터 1명 (테스트)
             {
                 int rand = Random.Range(0, GachaList.Count); // 랜덤
                 Players[rand].GetComponent<PhotonView>().RPC("SetImpoCrew", RpcTarget.AllViaServer, true);
@@ -212,23 +196,29 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
         yield return new WaitForSeconds(3);
         isGameStart = true;
+        
         MyPlayer.SetPos(SpawnPoint.position);
         MyPlayer.SetNickColor();
-        //MyPlayer.SetMission();
+        MyPlayer.SetMission();
+        MyPlayer.SetHPBar();    // HPBar 추가
         UM.GetComponent<PhotonView>().RPC("SetMaxMissionGage", RpcTarget.AllViaServer);
+
+
+      //  PlayerScript.PS.GetComponent<Inventory>();
+       // Inventory.instance.SetInventory();
+
 
         yield return new WaitForSeconds(1);
         ShowPanel(GamePanel);
         ShowGameUI();
-        StartCoroutine(UM.KillCo());
+        // Inventory.Instance.SetSlots();
+        StartCoroutine(UM.PunchCoolCo());
     }
 
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        UM.GetComponent<PhotonView>().RPC("SetMaxMissionGage", RpcTarget.AllViaServer);
-    }
-
-
+    //public override void OnPlayerLeftRoom(Player otherPlayer)
+    //{
+    //    UM.GetComponent<PhotonView>().RPC("SetMaxMissionGage", RpcTarget.AllViaServer);
+    //}
 
     public int GetCrewCount()
     {
@@ -239,24 +229,24 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     }
 
 
-
-
-    //기본적 UI구성
     void ShowGameUI()
     {
         if (MyPlayer.isImposter)
         {
-            UM.SetInteractionBtn1(0, false);
-            UM.SetInteractionBtn2(5, false);
+            UM.SetInteractionBtn0(0, false); //첫번째 버튼이 use로 세팅
+            UM.SetInteractionBtn1(5, true); //두번재 버튼이 킬로 세팅
+            UM.SetInteractionBtn2(6, false);
+            UM.SetHPBar();
         }
         else
         {
-            UM.SetInteractionBtn1(0, false);
-            UM.SetInteractionBtn2(5, false);
+            UM.SetInteractionBtn0(0, false); //첫번째 버튼이 use로 세팅
+            UM.SetInteractionBtn1(5, true); //두번재 버튼이 킬로 세팅   
+            UM.SetInteractionBtn2(6, false);
+            UM.SetHPBar();
         }
     }
 
-    //이 탈출해야지만, 승리하는 조건. 
     public void WinCheck()
     {
         int crewCount = 0;
@@ -271,7 +261,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             else
                 ++crewCount;
         }
-
         if (impoCount == 0 && crewCount > 0) // 모든 임포가 죽음
             Winner(true);
         else if (impoCount != 0 && impoCount > crewCount) // 임포가 크루보다 많음
@@ -284,13 +273,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
         if (isCrewWin)
         {
-            print("크루원 승리");
+            print("고고학자 승리");
             ShowPanel(CrewWinPanel);
             Invoke("WinnerDelay", 3);
         }
         else
         {
-            print("임포스터 승리");
+            print("파라오 승리");
             ShowPanel(ImposterWinPanel);
             Invoke("WinnerDelay", 3);
         }

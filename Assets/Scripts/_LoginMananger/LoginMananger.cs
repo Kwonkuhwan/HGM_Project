@@ -24,7 +24,6 @@ public class LoginMananger : MonoBehaviour
     [Header("SignUp")]
     public InputField S_EmailInput;
     public InputField S_PasswordInput;
-    public InputField S_UsernameInput;
 
     void ShowPanel(GameObject CurPanel)
     {
@@ -86,7 +85,7 @@ public class LoginMananger : MonoBehaviour
         PlayFabClientAPI.LoginWithEmailAddress(request, 
             (result) => 
             {
-                SceneManager.LoadScene("2_Ingame_Scene");
+                SceneManager.LoadScene("GameScene");
                 Status_Text.text = "로그인 성공"; 
             }, 
             (error) => 
@@ -95,9 +94,19 @@ public class LoginMananger : MonoBehaviour
             });
     }
 
+    private string RandomUserNameCreate()
+    {
+        int num = Random.Range(0, 10);
+        string[] str_random = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" };
+        int value = Random.Range(0, 2147483647);
+        return str_random[num] + value.ToString();
+    }
+
     private void Register()
     {
-        var request = new RegisterPlayFabUserRequest { Email = S_EmailInput.text, Password = S_PasswordInput.text, Username = S_UsernameInput.text, DisplayName = S_UsernameInput.text };
+        string str_UN = RandomUserNameCreate();
+
+        var request = new RegisterPlayFabUserRequest { Email = S_EmailInput.text, Password = S_PasswordInput.text, Username = str_UN, DisplayName = str_UN };
         PlayFabClientAPI.RegisterPlayFabUser(request, 
             (result) => 
             {

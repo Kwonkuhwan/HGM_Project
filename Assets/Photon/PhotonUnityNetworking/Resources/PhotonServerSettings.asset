@@ -16,7 +16,7 @@ MonoBehaviour:
     AppIdRealtime: bd89fe1f-f4ec-481d-941f-a96a991cd702
     AppIdFusion: 
     AppIdChat: 
-    AppIdVoice: d43e08b3-509b-4144-be8d-20a936bd30d3
+    AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
     FixedRegion: 
@@ -35,24 +35,28 @@ MonoBehaviour:
   StartInOfflineMode: 0
   RpcList:
   - AddMissionGage
-  - AnimSprites
   - ChatClearRPC
   - ChatRPC
   - ClickRpc
   - DestroyRpc
   - DestroySpaceship
+  - Filp
   - Fire
+  - FixedUpdate
   - GameStartRPC
+  - KnockBackCo
+  - Move
+  - OnTriggerEnter2D
+  - Punch
   - RespawnSpaceship
   - SetColor
-  - SetDie
   - SetImpoCrew
   - SetMaxMissionGage
+  - ShowGhostRPC
   - SpawnBody
-  - CantHearYou
-  - ChangeColour
-  - HeresWhy
-  - OnTriggerEnter2D
+  - GetItem
+  - FlipXRPC
+  - DirRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

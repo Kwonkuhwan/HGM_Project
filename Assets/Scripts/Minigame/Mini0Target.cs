@@ -49,11 +49,14 @@ public class Mini0Target : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
 		}
 			
 	}
+
 	void MissionClear() 
 	{
 		isClear = true;
 		RT.anchoredPosition = Vector2.zero;
 		MM.CompleteMission();
 	}
+
+
 
 }

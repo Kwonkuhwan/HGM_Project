@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: PlayFabEditorPrefsSO
   m_EditorClassIdentifier: 
   DevAccountEmail: joychoi980@gmail.com
-  DevAccountToken: xbofsicgt9g6rotba3w9xcyouigj44sct1bsb8nnhcu73dgrbp1htos7m54pfzw94uuo3zktheq5xqq6exhorjx7f37pj4k4e3635711gsz3bq4u3fkikpjm6ecuzccx88n51o5h8b84roojjnibb1688u4j375hnyszfkf37idpfgh78cug3h7i14eqe86t1iw55kai
+  DevAccountToken: hmhcnc7sktf31fmuytni5kky8fo6hxd65cjg88fyripa1yammhierq7jqenwafs76oqjncegijbddcbemosz3u5gkg1z6njohqkzip9j9j1hdge7yjew4y8fdfsjjac5ujrdy6wjtpyrkmk67rtwwegpuqcsmxuux1aj6qotg85d9aspsryyyxbzmbm6r9kzou134yx8
   SelectedStudio: HyeonGongMyeon
   SdkPath: Assets/PlayFabSDK
-  EdExPath: D:/Unity/Project/HyunGongMyeon/proto_A-main/Assets\_ExternalAssets\PlayFabEditorExtensions\Editor
+  EdExPath: 
   LocalCloudScriptPath: 
   PanelIsShown: 0
   curMainMenuIdx: 1

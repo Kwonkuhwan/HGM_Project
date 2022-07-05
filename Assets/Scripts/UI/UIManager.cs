@@ -8,26 +8,18 @@ using static NetworkManager;
 
 public class UIManager : MonoBehaviourPun
 {
-    public static UIManager UM = null;
-    private void Awake()
-    {
-        if (UM == null)
-        {
-            UM = this;
-            DontDestroyOnLoad(this);
-        }
-        else
-        {
-            Destroy(this);
-        }
-    }
+    public static UIManager UM;
+    //public ActionController actionController;
+
+    void Awake() => UM = this;
 
     // 0 : use, 1 customize, 2 cancel, 3 start, 4 report, 5 kill, 6 sabotage, 7 null, 8 emergency
     public Sprite[] sprites;
     int curBtn0, curBtn1, curBtn2;
     bool active0, active1, active2;
-    public Image WaitingInteractionBtn0, InteractionBtn1, InteractionBtn2;
-    public Text Interaction2Text;
+    //그냥 0 use , 1 attack   2 pickup
+    public Image WaitingInteractionBtn0, InteractionBtn0, InteractionBtn1, InteractionBtn2;
+    public Text Interaction1Text;
 
     public Image PreviewImage;
     public Color[] colors;
@@ -35,71 +27,62 @@ public class UIManager : MonoBehaviourPun
     public GameObject[] ColorCancel;
     public Button[] ColorBtn;
     public Button StartBtn;
-    public Transform LeftBottom, RightTop, LeftBottomMap, RightTopMap, PlayerMap;
-    public GameObject[] MissionMaps;
-    public Image KillerImage, DeadbodyImage;
     public Text LogText;
-    public Text broadCastText; 
-
-
     public GameObject[] Minigames;
     public GameObject MissionClearText;
-
-
     public int curInteractionNum;
     public Slider MissionGageSlider;
-    public GameObject SabotagePanel;
-
-    public GameObject Rock;
-
     PhotonView PV;
+
     public InputField ChatInput;
     public Text ChatText;
     public Scrollbar ChatScroll;
     public RectTransform ChatContent;
     public GameObject[] ChatPanels;
-    public int killCooltime, emergencyCooltime;
+
+    public Animator anim;
+
+    public int killCooltime;
+
+    // 2022.06.27 kkh : hp 슬라이더 값 추가
+    public Slider hp_slider = null;
 
     void Start()
     {
         PV = photonView;
     }
 
-    // 대기실
     public void SetInteractionBtn0(int index, bool _active)
     {
         curBtn0 = index;
         active0 = _active;
 
+        // 대기실
         if (!NM.isGameStart)
         {
             WaitingInteractionBtn0.sprite = sprites[index];
             WaitingInteractionBtn0.GetComponent<Button>().interactable = active0;
         }
-        else
+        else // 
         {
-            InteractionBtn1.sprite = sprites[index];
-            InteractionBtn1.GetComponent<Button>().interactable = active0;
+            InteractionBtn0.sprite = sprites[index];
+            InteractionBtn0.GetComponent<Button>().interactable = active0;
         }
     }
 
-    //공통에서 가질 use버튼 활성화 
-    //공통의 use btn_1
     public void SetInteractionBtn1(int index, bool _active)
-    {
-        curBtn0 = index;
-        active0 = _active;
-        InteractionBtn1.sprite = sprites[index];
-        InteractionBtn1.GetComponent<Button>().interactable = active0;
-    }
-
-    //공통의 kill btn_2
-    public void SetInteractionBtn2(int index, bool _active)
     {
         curBtn1 = index;
         active1 = _active;
+        InteractionBtn1.sprite = sprites[index];
+        InteractionBtn1.GetComponent<Button>().interactable = active1;
+    }
+    public void SetInteractionBtn2(int index, bool _active)
+    {
+        curBtn2 = index;
+        active2 = _active;
         InteractionBtn2.sprite = sprites[index];
-        InteractionBtn2.GetComponent<Button>().interactable = active1;
+        InteractionBtn2.GetComponent<Button>().interactable = active2;
     }
 
     public void ColorChange(int _colorIndex)
@@ -117,10 +100,8 @@ public class UIManager : MonoBehaviourPun
             SetIsCustomize(false);
             PreviewImage.color = colors[NM.MyPlayer.colorIndex];
         }
-    }
-    public void ClickInteractionBtn1()
-    {
-        if(curBtn0 == 0)
+        // 사용
+        else if (curBtn0 == 0)
         {
             // 크루원 작업
             GameObject CurMinigame = Minigames[Random.Range(0, Minigames.Length)];
@@ -128,16 +109,36 @@ public class UIManager : MonoBehaviourPun
         }
     }
 
-    public void ClickInteractionBtn2()
+    public void ClickInteractionBtn1()
     {
         // 킬
         if (curBtn1 == 5)
         {
             if (NM.MyPlayer.isDie) return;
-            NM.MyPlayer.Kill();
+            NM.MyPlayer.Punch();
         }
     }
 
+    public void ClickInteractionBtn2()
+    {
+        // 획득
+        if (curBtn2 == 6)
+        {
+            Debug.Log("PickUp");
+            //pickUp.SetPickUp();
+        }
+
+                // 이것의 결과를 가져와야할 것이다~ 이말이야. 
+
+                //if (NM.MyPlayer.isDie) return;
+                //NM.MyPlayer.Kill();
+
+                //inventory.items[i] = 1; // makes sure that the slot is now considered FULL
+                //Instantiate(itemButton, inventory.slots[i].transform, false); // spawn the button so that the player can interact with it
+                //Destroy(gameObject);
+                //break;
+
+    }
     public void SetIsCustomize(bool b)
     {
         NM.MyPlayer.isMove = b;
@@ -147,7 +148,6 @@ public class UIManager : MonoBehaviourPun
     {
         if (!PhotonNetwork.InRoom) return;
         SetActiveColors();
-        SetMap();
         if (!PhotonNetwork.IsMasterClient) return;
         ShowStartBtn();
     }
@@ -155,6 +155,7 @@ public class UIManager : MonoBehaviourPun
     void ShowStartBtn()
     {
         StartBtn.gameObject.SetActive(true);
+        //StartBtn.interactable = PhotonNetwork.CurrentRoom.PlayerCount >= 7; // 기본값
         StartBtn.interactable = PhotonNetwork.CurrentRoom.PlayerCount >= 1; // 2
     }
 
@@ -172,58 +173,34 @@ public class UIManager : MonoBehaviourPun
         }
     }
 
-    public void SetMap()
+
+    public IEnumerator PunchCoolCo()
     {
-        // 실제 맵
-        float width = RightTop.position.x - LeftBottom.position.x;
-        float height = RightTop.position.y - LeftBottom.position.y;
-
-        Vector3 MyPlayerPos = NM.MyPlayer.transform.position;
-        float playerWidth = MyPlayerPos.x - LeftBottom.position.x;
-        float playerHeight = MyPlayerPos.y - LeftBottom.position.y;
-
-        // 지도
-        float widthMap = RightTopMap.position.x - LeftBottomMap.position.x;
-        float heightMap = RightTopMap.position.y - LeftBottomMap.position.y;
-
-        float playerMapX = LeftBottomMap.position.x + (playerWidth / width) * widthMap;
-        float playerMapY = LeftBottomMap.position.y + (playerHeight / height) * heightMap;
-
-        PlayerMap.position = new Vector3(playerMapX, playerMapY, 0);
-    }
-
-
-    public IEnumerator KillCo()
-    {
-        SetInteractionBtn2(5, false);
+        SetInteractionBtn1(5, false);
         NM.MyPlayer.isKillable = false;
 
-        for (int i = 10; i > 0; i--) // 기본 15초 킬대기
-        //for (int i = 3; i > 0; i--)
+        for (int i = 1; i > 0; i--) // 기본 15초 킬대기
         {
             killCooltime = i;
 
             if (UM.curBtn1 == 5) 
-                Interaction2Text.text = killCooltime.ToString();
+                Interaction1Text.text = killCooltime.ToString();
             else
-                Interaction2Text.text = "";
+                Interaction1Text.text = "";
 
             yield return new WaitForSeconds(1);
         }
         killCooltime = 0;
-        Interaction2Text.text = "";
-
+        Interaction1Text.text = "";
+        //Enum상태 변경
         NM.MyPlayer.isKillable = true;
+        SetInteractionBtn1(5, true);
     }
 
 
-    //킬 당한 인원에게 킬 연출 true
     public IEnumerator DieCo(int killerColorIndex, int deadBodyColorIndex)
     {
         DiePanel.SetActive(true);
-        KillerImage.color = UM.colors[killerColorIndex];
-        DeadbodyImage.color = UM.colors[deadBodyColorIndex];
-
         yield return new WaitForSeconds(4);
         DiePanel.SetActive(false);
     }
@@ -232,10 +209,6 @@ public class UIManager : MonoBehaviourPun
     {
         LogText.text = log;
     }
-
-
-
-
 
 
     [PunRPC]
@@ -247,13 +220,10 @@ public class UIManager : MonoBehaviourPun
     [PunRPC]
     public void AddMissionGage()
     {
-        //미션 게이지  수정할것. 
-        MissionGageSlider.value += 5.0f;
+        MissionGageSlider.value += 0.25f;
 
         if (MissionGageSlider.value == MissionGageSlider.maxValue) 
         {
-            Rock.SetActive(false);
-            // 미션게이지가 다 찰경우 문을 오픈.
             // 크루원 승리
             //NM.Winner(true);
         }
@@ -261,17 +231,29 @@ public class UIManager : MonoBehaviourPun
 
     public IEnumerator MissionClearCo(GameObject MissionPanel) 
     {
+
         MissionPanel.SetActive(false);
         MissionClearText.SetActive(true);
         yield return new WaitForSeconds(2);
         MissionClearText.SetActive(false);
     }
 
-    //미션클리어 함수
-    public void MissionClear(GameObject MissionPanel)
+    public void MissionClear(GameObject MissionPanel) 
     {
         StartCoroutine(MissionClearCo(MissionPanel));
         PV.RPC("AddMissionGage", RpcTarget.AllViaServer);
     }
-}
 
+    // 2022.06.26 kkh : HPBar UI Set
+    public void SetHPBar()
+    {
+        if (!NM.isGameStart)
+        {
+            hp_slider.enabled = false;
+        }
+        else
+        {
+            hp_slider.enabled = true;
+        }
+    }
+}
